@@ -13,6 +13,7 @@
 - Show CAN Interface Parameter
 - CAN Statistics
 - Send CAN Frames (single, repeated, random)
+- Filter CAN Frames
   
 ## Usage
 
