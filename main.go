@@ -54,14 +54,16 @@ func main() {
 	if err != nil {
 		log.Println(err)
 		fmt.Printf("Error: %v\n", err)
-		fmt.Println("########################################")
-		fmt.Println("You can add a virtual CAN interface:")
-		fmt.Println("sudo modprobe vcan")
-		fmt.Println("sudo ip link add dev vcan0 type vcan")
-		fmt.Println("sudo ip link set up vcan0")
-		fmt.Print("\nYou can generate testdata as follow:\n")
-		fmt.Println("cangen vcan0")
-		fmt.Println("########################################")
+		if err.Error() != "Interface is not up" {
+			fmt.Println("########################################")
+			fmt.Println("You can add a virtual CAN Interface:")
+			fmt.Println("sudo modprobe vcan")
+			fmt.Println("sudo ip link add dev vcan0 type vcan")
+			fmt.Println("sudo ip link set up vcan0")
+			fmt.Print("\nYou can generate testdata as follow:\n")
+			fmt.Println("cangen vcan0")
+			fmt.Println("########################################")
+		}
 		os.Exit(1)
 	}
 

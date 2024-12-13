@@ -3,6 +3,7 @@ package candevice
 import (
 	"errors"
 	"log"
+	"net"
 	"os/exec"
 	"regexp"
 	"slices"
@@ -72,9 +73,20 @@ func NewDevice(caninf string) (*CanDevice, error) {
 	log.Println("Interfaces CAN: ", canDev.CanInterfaces.can)
 	log.Println("Interfaces VCAN: ", canDev.CanInterfaces.vcan)
 
-	// Check ob Interface exists
+	//  Check if the interface exists
 	if !(slices.Contains(canDev.CanInterfaces.can, canDev.CanInf) || slices.Contains(canDev.CanInterfaces.vcan, canDev.CanInf)) {
-		err = errors.New("interface not exists")
+		err = errors.New("Interface not exists")
+		return &CanDevice{}, err
+	}
+
+	// Check if the interface is up
+	inf, err := net.InterfaceByName(canDev.CanInf)
+	if err != nil {
+		err = errors.New("Interface error")
+		return &CanDevice{}, err
+	}
+	if !strings.Contains(inf.Flags.String(), "up") {
+		err = errors.New("Interface is not up")
 		return &CanDevice{}, err
 	}
 

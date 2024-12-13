@@ -17,8 +17,12 @@
   
 ## Usage
 
-Just run `socanui can0` in your terminal and the UI will start. 
+Just run `socanui <interface>` in your terminal and the UI will start.
 
+For the first physical CAN adapter:
+```sh
+socanui can0
+```
 
 ## Install
 
@@ -27,15 +31,16 @@ git clone https://github.com/miwagner/socanui.git
 go build -o socanui main.go
 ```
 
-## Run
-```sh
-./socanui
-```
-
 ## Socket CAN
 
 You can create a virtual CAN interface if you don't have a physical CAN adapter:
 ```sh
 sudo ip link add dev vcan0 type vcan
 sudo ip link set up vcan0
+```
+
+
+You can generate testdata as follow:
+```sh
+cangen vcan0
 ```
