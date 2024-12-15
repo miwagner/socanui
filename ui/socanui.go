@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	VERSION = "0.11"
+	VERSION = "0.2"
 	TITLE   = "SocketCAN User Interface"
 )
 
