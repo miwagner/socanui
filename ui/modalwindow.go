@@ -10,8 +10,20 @@ import (
 // create parameter windows
 func (socanui *Socanui) createParameterWindows() *tview.Modal {
 	parametertext := "[black::ub]CAN Parameter\n\n"
-	parametertext += fmt.Sprintf("[black]State:            [white] %12s\n", socanui.candev.CanParams.State)
 	parametertext += fmt.Sprintf("[black]Bitrate:          [white] %12d\n", socanui.candev.CanParams.Bitrate)
+	parametertext += fmt.Sprintf("[black]State:            [white] %12s\n", socanui.candev.CanParams.State)
+	parametertext += "[black]Mode:"
+	if len(socanui.candev.CanParams.Mode) > 0 {
+		for i, mode := range socanui.candev.CanParams.Mode {
+			if i == 0 {
+				parametertext += fmt.Sprintf("             [white] %12s\n", mode)
+			} else {
+				parametertext += fmt.Sprintf("                  [white] %12s\n", mode)
+			}
+		}
+	} else {
+		parametertext += "\n"
+	}
 	parametertext += fmt.Sprintf("[black]Samplepoint:      [white] %12.3f\n", socanui.candev.CanParams.SamplePoint)
 	parametertext += fmt.Sprintf("[black]Restart ms:       [white] %12d\n", socanui.candev.CanParams.RestartTime)
 	parametertext += fmt.Sprintf("[black]TQ:               [white] %12d\n", socanui.candev.CanParams.Tq)
@@ -20,7 +32,7 @@ func (socanui *Socanui) createParameterWindows() *tview.Modal {
 	parametertext += fmt.Sprintf("[black]Phase-Seg-2:      [white] %12d\n", socanui.candev.CanParams.PhaseSeg2)
 	parametertext += fmt.Sprintf("[black]SJW:              [white] %12d\n", socanui.candev.CanParams.Sjw)
 
-	paramaterWindow := tview.NewModal().
+	parameterWindow := tview.NewModal().
 		SetText(parametertext).
 		AddButtons([]string{"Close"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
@@ -28,7 +40,7 @@ func (socanui *Socanui) createParameterWindows() *tview.Modal {
 				socanui.pages.SwitchToPage("main")
 			}
 		})
-	return paramaterWindow
+	return parameterWindow
 }
 
 // create version windows

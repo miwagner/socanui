@@ -60,10 +60,6 @@ func (sck *Socket) Close() error {
 }
 
 // Bind binds the socket on the CAN bus with the given address.
-//
-// Example:
-//
-//	err = sck.Bind("vcan0")
 func (sck *Socket) Bind(addr string) error {
 	iface, err := net.InterfaceByName(addr)
 	if err != nil {

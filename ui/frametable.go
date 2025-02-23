@@ -42,7 +42,7 @@ func (socanui *Socanui) createFrameTable() *FrameTable {
 		SetSelectable(false, false)
 	frametable.cft = tview.NewFrame(frametable.cftT).
 		SetBorders(0, 0, 0, 0, 1, 1).
-		AddText("ID       DLC  DATA                       Period  Count  ASCII", true, tview.AlignLeft, tcell.ColorWhite)
+		AddText("ID       DLC  DATA                       Period    Count  ASCII", true, tview.AlignLeft, tcell.ColorWhite)
 
 	frametable.cftT.SetFocusFunc(func() {
 		frametable.cft.SetBackgroundColor(tcell.ColorGrey)
@@ -84,7 +84,7 @@ func (row *trow) cellText() string {
 	if row.kind == canbus.EFF || row.kind == canbus.RTR_EFF {
 		id = fmt.Sprintf("%08X", row.id)
 	}
-	return fmt.Sprintf("%-8s [%1d]  %-25s %7d %6d  |%-8s|", id, row.dlc, data, row.period, row.count, toASCII(row.data))
+	return fmt.Sprintf("%-8s [%1d]  %-25s %7d %8d  |%-8s|", id, row.dlc, data, row.period, row.count, toASCII(row.data))
 }
 
 func (tdata *TableData) GetCell(row, column int) *tview.TableCell {

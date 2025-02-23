@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	VERSION = "0.2"
+	VERSION = "0.3"
 	TITLE   = "SocketCAN User Interface"
 )
 
@@ -225,11 +226,11 @@ func (socanui *Socanui) statistic() {
 		stat.TxFrameAveSec = stat.TxFrameSum / stat.Runs
 		stat.Runs++
 
-		out := "[blue::b]Statistics              RX          TX[white::-]\n"
-		out += fmt.Sprintf("%s%12d%12d\n", "Count Frames:   ", stat.RxFrameSum, stat.TxFrameSum)
-		out += fmt.Sprintf("%s%12d%12d\n", "Last Sec Frames:", stat.RxFrameLastSec, stat.TxFrameLastSec)
-		out += fmt.Sprintf("%s%12d%12d\n", "Max Frames/s:   ", stat.RxFrameMaxSec, stat.TxFrameMaxSec)
-		out += fmt.Sprintf("%s%12d%12d\n", "Ave Frames/s:   ", stat.RxFrameAveSec, stat.TxFrameAveSec)
+		out := "[blue::b]Statistics                 RX           TX[white::-]\n"
+		out += fmt.Sprintf("%s%12d %12d\n", "Number of Frames:", stat.RxFrameSum, stat.TxFrameSum)
+		out += fmt.Sprintf("%s%12d %12d\n", "Last Sec Frames: ", stat.RxFrameLastSec, stat.TxFrameLastSec)
+		out += fmt.Sprintf("%s%12d %12d\n", "Max Frames/s:    ", stat.RxFrameMaxSec, stat.TxFrameMaxSec)
+		out += fmt.Sprintf("%s%12d %12d\n", "Ave Frames/s:    ", stat.RxFrameAveSec, stat.TxFrameAveSec)
 
 		socanui.statistics.SetText(out)
 	}
@@ -306,20 +307,21 @@ func (socanui *Socanui) createHeadBar() *tview.Flex {
 		SetTextAlign(tview.AlignCenter).
 		SetText("[::b]" + TITLE)
 	headinf := tview.NewTextView().
+		SetDynamicColors(true).
 		SetTextColor(tcell.ColorLightSteelBlue).
 		SetTextAlign(tview.AlignRight).
-		SetText(socanui.candev.CanInf)
+		SetText(fmt.Sprintf("[:green:]%s[-:-:b] %s", strings.Join(socanui.candev.CanParams.Mode, ", "), socanui.candev.CanInf))
 	return tview.NewFlex().
-		AddItem(headfilter, 0, 1, false).
+		AddItem(headfilter, 0, 2, false).
 		AddItem(headtitle, 0, 5, true).
-		AddItem(headinf, 0, 1, false)
+		AddItem(headinf, 0, 2, false)
 }
 
 // create button bar
 func (socanui *Socanui) createButtonBar() {
 	socanui.buttonBar = tview.NewTextView().
 		SetTextColor(tcell.ColorRosyBrown).
-		SetText("Ctrl+C Quit | Ctrl+F Filter | Ctrl+R Reset | Ctrl+P Parameter | Ctrl+V Version| Ctrl+H Help")
+		SetText("Ctrl+C Quit | Ctrl+F Filter | Ctrl+R Reset | Ctrl+P Parameter | Ctrl+V Version | Ctrl+H Help")
 
 	socanui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlH {
