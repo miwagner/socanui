@@ -14,26 +14,27 @@ import (
 )
 
 const (
-	VERSION = "0.3"
+	VERSION = "0.4"
 	TITLE   = "SocketCAN User Interface"
 )
 
 type Socanui struct {
-	app        *tview.Application
-	candev     *candevice.CanDevice
-	pages      *tview.Pages
-	headBar    *tview.Flex
-	frametable *FrameTable
-	framelist  *FrameList
-	txview     *TXView
-	params     *tview.TextView
-	statistics *tview.TextView
-	buttonBar  *tview.TextView
-	txIndicate *tview.TextView
-	layout     *tview.Grid
-	filter     *tview.Frame
-	stopSend   bool
-	blink      bool
+	app           *tview.Application
+	candev        *candevice.CanDevice
+	pages         *tview.Pages
+	headBar       *tview.Flex
+	frametable    *FrameTable
+	framelist     *FrameList
+	txview        *TXView
+	params        *tview.TextView
+	statistics    *tview.TextView
+	buttonBar     *tview.TextView
+	txIndicate    *tview.TextView
+	layout        *tview.Grid
+	filter        *tview.Frame
+	stopSend      bool
+	blink         bool
+	receiveEnable bool
 }
 
 // create the TView application
@@ -41,6 +42,7 @@ func CreateSocanUI(app *tview.Application, candev *candevice.CanDevice) {
 	socanui := &Socanui{}
 	socanui.app = app
 	socanui.candev = candev
+	socanui.receiveEnable = true
 
 	// theme
 	tview.Styles = tview.Theme{
@@ -76,6 +78,7 @@ func CreateSocanUI(app *tview.Application, candev *candevice.CanDevice) {
 // create application
 func (socanui *Socanui) createApp() {
 	socanui.headBar = socanui.createHeadBar()
+	socanui.setHeadBarStatus()
 	socanui.frametable = socanui.createFrameTable()
 	socanui.framelist = socanui.createFrameList()
 	socanui.txview = socanui.createTXView()
@@ -177,30 +180,32 @@ func (socanui *Socanui) createPages() (layout *tview.Pages) {
 // show received CAN frames in the views
 func (socanui *Socanui) showCANreceive() {
 	for {
-		msg, err := socanui.candev.RecFrame()
-		if err != nil {
-			log.Fatalf("recv error: %v\n", err)
-		}
-		// error frame
-		if msg.Kind == canbus.ERR {
-			log.Printf("*** Error frame: %v", msg)
-			continue
-		}
-		// filter
-		if socanui.candev.CanFilter.RangeActiv {
-			if msg.ID < socanui.candev.CanFilter.IdStart || msg.ID > socanui.candev.CanFilter.IdEnd {
+		if socanui.receiveEnable {
+			msg, err := socanui.candev.RecFrame()
+			if err != nil {
+				log.Fatalf("recv error: %v\n", err)
+			}
+			// error frame
+			if msg.Kind == canbus.ERR {
+				log.Printf("*** Error frame: %v", msg)
 				continue
 			}
+			// filter
+			if socanui.candev.CanFilter.RangeActiv {
+				if msg.ID < socanui.candev.CanFilter.IdStart || msg.ID > socanui.candev.CanFilter.IdEnd {
+					continue
+				}
+			}
+			// add list
+			out := socanui.framelist.add(&msg)
+			if len(out) > 0 {
+				fmt.Fprint(socanui.framelist.cflV, out)
+			}
+			// update table
+			socanui.app.QueueUpdate(func() {
+				tabledata.InsertOrUpdateRow(msg.ID, uint8(len(msg.Data)), msg.Data, msg.Kind)
+			})
 		}
-		// add list
-		out := socanui.framelist.add(&msg)
-		if len(out) > 0 {
-			fmt.Fprint(socanui.framelist.cflV, out)
-		}
-		// update table
-		socanui.app.QueueUpdate(func() {
-			tabledata.InsertOrUpdateRow(msg.ID, uint8(len(msg.Data)), msg.Data, msg.Kind)
-		})
 	}
 }
 
@@ -251,6 +256,16 @@ func (socanui *Socanui) clearStatistic() {
 	socanui.candev.CanStatstic.TxFrameMaxSec = 0
 }
 
+// stop receivee
+func (socanui *Socanui) stopReceive() {
+	socanui.receiveEnable = false
+}
+
+// start receive
+func (socanui *Socanui) startReceive() {
+	socanui.receiveEnable = true
+}
+
 // show parameters in the view
 func (socanui *Socanui) parameter() {
 	out := fmt.Sprintf("[blue::b]%s Parameters[white::-]\n", socanui.candev.CanInf)
@@ -297,9 +312,8 @@ func (socanui *Socanui) indicateTX() {
 
 // create head bar
 func (socanui *Socanui) createHeadBar() *tview.Flex {
-	headfilter := tview.NewTextView().
+	headstatus := tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextColor(tcell.ColorRed).
 		SetTextAlign(tview.AlignLeft)
 	headtitle := tview.NewTextView().
 		SetDynamicColors(true).
@@ -312,16 +326,32 @@ func (socanui *Socanui) createHeadBar() *tview.Flex {
 		SetTextAlign(tview.AlignRight).
 		SetText(fmt.Sprintf("[:green:]%s[-:-:b] %s", strings.Join(socanui.candev.CanParams.Mode, ", "), socanui.candev.CanInf))
 	return tview.NewFlex().
-		AddItem(headfilter, 0, 2, false).
+		AddItem(headstatus, 0, 2, false).
 		AddItem(headtitle, 0, 5, true).
 		AddItem(headinf, 0, 2, false)
+}
+
+// set head bar status
+func (socanui *Socanui) setHeadBarStatus() {
+	status := ""
+	// filter
+	if socanui.candev.CanFilter.RangeActiv {
+		status = ("[red::b]Filter active [-:-:-]")
+	}
+	// receive
+	if socanui.receiveEnable {
+		status += "[:green:b]RECEIVE"
+	} else {
+		status += "[:red:bl]STOP"
+	}
+	socanui.headBar.GetItem(0).(*tview.TextView).SetText(status)
 }
 
 // create button bar
 func (socanui *Socanui) createButtonBar() {
 	socanui.buttonBar = tview.NewTextView().
 		SetTextColor(tcell.ColorRosyBrown).
-		SetText("Ctrl+C Quit | Ctrl+F Filter | Ctrl+R Reset | Ctrl+P Parameter | Ctrl+V Version | Ctrl+H Help")
+		SetText("Ctrl+C Quit | Ctrl+S Stop | Ctrl+T Start | Ctrl+F Filter | Ctrl+R Reset | Ctrl+P Parameter | Ctrl+V Version | Ctrl+H Help")
 
 	socanui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlH {
@@ -345,6 +375,14 @@ func (socanui *Socanui) createButtonBar() {
 			socanui.framelist.reset()
 			socanui.frametable.cftT.Clear()
 			socanui.framelist.cflV.Clear()
+		}
+		if event.Key() == tcell.KeyCtrlS {
+			socanui.stopReceive()
+			socanui.setHeadBarStatus()
+		}
+		if event.Key() == tcell.KeyCtrlT {
+			socanui.startReceive()
+			socanui.setHeadBarStatus()
 		}
 		return event
 	})

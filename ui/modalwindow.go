@@ -7,7 +7,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-// create parameter windows
+// create parameter window
 func (socanui *Socanui) createParameterWindows() *tview.Modal {
 	parametertext := "[black::ub]CAN Parameter\n\n"
 	parametertext += fmt.Sprintf("[black]Bitrate:          [white] %12d\n", socanui.candev.CanParams.Bitrate)
@@ -43,7 +43,7 @@ func (socanui *Socanui) createParameterWindows() *tview.Modal {
 	return parameterWindow
 }
 
-// create version windows
+// create version window
 func (socanui *Socanui) createVersionWindows() *tview.Modal {
 	versionWindow := tview.NewModal().
 		SetText("[black::ub]SocketCAN User Interface\n\nhttps://github.com/miwagner/socanui\n\nMichael Wagner\n\nVersion " + VERSION + "\n").
@@ -56,10 +56,22 @@ func (socanui *Socanui) createVersionWindows() *tview.Modal {
 	return versionWindow
 }
 
-// create help windows
+// create help window
 func (socanui *Socanui) createHelpWindows() *tview.Modal {
+	helptext := "[black::ub]Help\n\n"
+	helptext += "[black]Receive Stop:        [white]CTRL + S  \n"
+	helptext += "[black]Receive Start:       [white]CTRL + T  \n"
+	helptext += "[black]Filter:              [white]CTRL + F  \n"
+	helptext += "[black]Reset:               [white]CTRL + R  \n"
+	helptext += "[black]Parameter:           [white]CTRL + P  \n"
+	helptext += "[black]Version:             [white]CTRL + V  \n"
+	helptext += "[black]Quit:                [white]CTRL + Q  \n"
+	helptext += "[black]Navigate:            [white]Arrow Keys\n"
+	helptext += "                       Page Up/Down\n"
+	helptext += "                Home\n"
+	helptext += "               End"
 	helpWindow := tview.NewModal().
-		SetText("[black::ub]Help\n\n[black]Navigate:  [white]Arrow Keys, Page Up/Down, Home, End").
+		SetText(helptext).
 		AddButtons([]string{"Close"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Close" {
@@ -69,7 +81,7 @@ func (socanui *Socanui) createHelpWindows() *tview.Modal {
 	return helpWindow
 }
 
-// create filter windows
+// create filter window
 func (socanui *Socanui) createFilterWindows() {
 	filterForm := tview.NewForm()
 	filterForm.AddInputField("Start ID", "", 9, func(textToCheck string, lastChar rune) bool {
@@ -92,11 +104,7 @@ func (socanui *Socanui) createFilterWindows() {
 			socanui.candev.CanFilter.IdEnd = uint32(id)
 		}
 		socanui.candev.CanFilter.RangeActiv = filterForm.GetFormItem(2).(*tview.Checkbox).IsChecked()
-		if filterForm.GetFormItem(2).(*tview.Checkbox).IsChecked() {
-			socanui.headBar.GetItem(0).(*tview.TextView).SetText("[::b]Filter active")
-		} else {
-			socanui.headBar.GetItem(0).(*tview.TextView).SetText("")
-		}
+		socanui.setHeadBarStatus()
 		socanui.pages.SwitchToPage("main")
 	})
 
